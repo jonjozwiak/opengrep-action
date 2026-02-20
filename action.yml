@@ -1,0 +1,130 @@
+name: 'OpenGrep SAST Scanner'
+description: 'Run OpenGrep static analysis security testing with configurable rules and outputs'
+author: 'jonjozwiak'
+
+branding:
+  icon: 'shield'
+  color: 'red'
+
+inputs:
+  version:
+    description: 'OpenGrep version to use'
+    required: false
+    default: 'v1.16.1'
+
+  config:
+    description: 'Rule configuration (auto, path to config file, or inline rules)'
+    required: false
+    default: 'auto'
+
+  paths:
+    description: 'Paths to scan (space-separated)'
+    required: false
+    default: '.'
+
+  output-format:
+    description: 'Output format: json, sarif, text, gitlab-sast, gitlab-secrets, junit-xml, semgrep-json'
+    required: false
+    default: 'json'
+
+  output-file:
+    description: 'Output file path'
+    required: false
+    default: 'opengrep-results.json'
+
+  severity:
+    description: 'Minimum severity level: INFO, WARNING, ERROR'
+    required: false
+    default: 'INFO'
+
+  exclude:
+    description: 'Exclude patterns (space-separated)'
+    required: false
+    default: ''
+
+  include:
+    description: 'Include patterns (space-separated)'
+    required: false
+    default: ''
+
+  max-target-bytes:
+    description: 'Maximum bytes to scan per file'
+    required: false
+    default: '1000000'
+
+  timeout:
+    description: 'Timeout in seconds'
+    required: false
+    default: '1800'
+
+  jobs:
+    description: 'Number of parallel jobs (0 = auto-detect)'
+    required: false
+    default: '0'
+
+  max-memory:
+    description: 'Maximum memory in MB (0 = unlimited)'
+    required: false
+    default: '0'
+
+  baseline-commit:
+    description: 'Git commit to use as baseline for differential scanning'
+    required: false
+    default: ''
+
+  diff-depth:
+    description: 'Git diff depth for changed files scanning'
+    required: false
+    default: '2'
+
+  enable-metrics:
+    description: 'Enable OpenGrep anonymous metrics'
+    required: false
+    default: 'false'
+
+  verbose:
+    description: 'Enable verbose output'
+    required: false
+    default: 'false'
+
+  no-git-ignore:
+    description: 'Ignore .gitignore files'
+    required: false
+    default: 'false'
+
+  verify-signature:
+    description: 'Verify binary signature using Cosign'
+    required: false
+    default: 'true'
+
+  fail-on-findings:
+    description: 'Fail the action if findings are detected'
+    required: false
+    default: 'false'
+
+  upload-artifacts:
+    description: 'Upload results as GitHub artifacts'
+    required: false
+    default: 'true'
+
+  artifact-name:
+    description: 'Name for uploaded artifact'
+    required: false
+    default: 'opengrep-results'
+
+outputs:
+  results-file:
+    description: 'Path to the results file'
+
+  findings-count:
+    description: 'Number of findings detected'
+
+  critical-count:
+    description: 'Number of critical/high severity findings'
+
+  scan-exit-code:
+    description: 'OpenGrep scan exit code'
+
+runs:
+  using: 'node24'
+  main: 'dist/index.js'
