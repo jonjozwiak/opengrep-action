@@ -37,10 +37,7 @@ describe('processResults', () => {
     mockExistsSync.mockReturnValue(true)
     mockReadFileSync.mockReturnValue(
       JSON.stringify({
-        results: [
-          { extra: { severity: 'HIGH' } },
-          { extra: { severity: 'INFO' } }
-        ]
+        results: [{ extra: { severity: 'HIGH' } }, { extra: { severity: 'INFO' } }]
       })
     )
     const metrics = processResults('results.json', 'json')
@@ -54,11 +51,7 @@ describe('processResults', () => {
       JSON.stringify({
         runs: [
           {
-            results: [
-              { level: 'error' },
-              { level: 'warning' },
-              { level: 'note' }
-            ]
+            results: [{ level: 'error' }, { level: 'warning' }, { level: 'note' }]
           }
         ]
       })

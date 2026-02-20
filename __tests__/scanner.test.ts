@@ -141,14 +141,16 @@ describe('buildArgs', () => {
   })
 
   it('should add baseline commit', () => {
-    ;(cp.execSync as jest.Mock).mockReturnValue(Buffer.from('commit'))
+    const mockExecSync = cp.execSync as jest.Mock
+    mockExecSync.mockReturnValue(Buffer.from('commit'))
     const args = buildArgs(makeInputs({ baselineCommit: 'abc123' }))
     expect(args).toContain('--baseline-commit')
     expect(args).toContain('abc123')
   })
 
   it('should skip baseline commit when not available in git history', () => {
-    ;(cp.execSync as jest.Mock).mockImplementation(() => {
+    const mockExecSync = cp.execSync as jest.Mock
+    mockExecSync.mockImplementation(() => {
       throw new Error('not found')
     })
     const args = buildArgs(makeInputs({ baselineCommit: 'abc123' }))

@@ -7,8 +7,7 @@ import * as fs from 'fs'
 import { PlatformInfo } from './platform'
 
 async function installCosign(platformInfo: PlatformInfo): Promise<string> {
-  const cosignBinary =
-    platformInfo.arch === 'arm64' ? 'cosign-linux-arm64' : 'cosign-linux-amd64'
+  const cosignBinary = platformInfo.arch === 'arm64' ? 'cosign-linux-arm64' : 'cosign-linux-amd64'
 
   // Check tool cache
   const cachedPath = tc.find('cosign', 'latest', platformInfo.arch)

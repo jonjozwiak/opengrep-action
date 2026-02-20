@@ -13,12 +13,10 @@ function countJsonFindings(filePath: string): ScanMetrics {
     const data = JSON.parse(content)
     const results = data.results || []
     const findingsCount = results.length
-    const criticalCount = results.filter(
-      (r: { extra?: { severity?: string } }) => {
-        const sev = r.extra?.severity
-        return sev === 'ERROR' || sev === 'CRITICAL' || sev === 'HIGH'
-      }
-    ).length
+    const criticalCount = results.filter((r: { extra?: { severity?: string } }) => {
+      const sev = r.extra?.severity
+      return sev === 'ERROR' || sev === 'CRITICAL' || sev === 'HIGH'
+    }).length
     return { findingsCount, criticalCount }
   } catch (error) {
     core.warning(`Failed to parse JSON results: ${error}`)
@@ -74,11 +72,7 @@ export function processResults(outputFile: string, outputFormat: OutputFormat): 
   return metrics
 }
 
-export function setOutputs(
-  outputFile: string,
-  scanExitCode: number,
-  metrics: ScanMetrics
-): void {
+export function setOutputs(outputFile: string, scanExitCode: number, metrics: ScanMetrics): void {
   core.setOutput('results-file', outputFile)
   core.setOutput('findings-count', metrics.findingsCount.toString())
   core.setOutput('critical-count', metrics.criticalCount.toString())

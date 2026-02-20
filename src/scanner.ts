@@ -156,10 +156,7 @@ function createEmptyOutput(outputFile: string, outputFormat: string): void {
   }
 }
 
-export async function runScan(
-  binaryPath: string,
-  inputs: ActionInputs
-): Promise<ScanResult> {
+export async function runScan(binaryPath: string, inputs: ActionInputs): Promise<ScanResult> {
   const args = buildArgs(inputs)
 
   core.info('Running OpenGrep with the following command:')

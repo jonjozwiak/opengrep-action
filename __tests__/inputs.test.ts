@@ -3,9 +3,7 @@ import * as core from '@actions/core'
 jest.mock('@actions/core')
 
 const mockGetInput = core.getInput as jest.MockedFunction<typeof core.getInput>
-const mockGetBooleanInput = core.getBooleanInput as jest.MockedFunction<
-  typeof core.getBooleanInput
->
+const mockGetBooleanInput = core.getBooleanInput as jest.MockedFunction<typeof core.getBooleanInput>
 
 import { getInputs } from '../src/inputs'
 
