@@ -2,6 +2,7 @@ import * as core from '@actions/core'
 import * as exec from '@actions/exec'
 import * as github from '@actions/github'
 import * as fs from 'fs'
+import * as cp from 'child_process'
 import { ActionInputs } from './inputs'
 
 export interface ScanResult {
@@ -92,8 +93,24 @@ export function buildArgs(inputs: ActionInputs): string[] {
   return args
 }
 
+function isCommitAvailable(sha: string): boolean {
+  try {
+    cp.execSync(`git cat-file -t ${sha}`, { stdio: 'pipe' })
+    return true
+  } catch {
+    return false
+  }
+}
+
 export function resolveBaselineCommit(inputBaseline: string): string {
   if (inputBaseline) {
+    if (!isCommitAvailable(inputBaseline)) {
+      core.warning(
+        `Baseline commit ${inputBaseline} is not available in the local git history. ` +
+          'Skipping differential scan. Use fetch-depth: 0 in actions/checkout to enable it.'
+      )
+      return ''
+    }
     return inputBaseline
   }
 
@@ -102,6 +119,13 @@ export function resolveBaselineCommit(inputBaseline: string): string {
   if (context.eventName === 'pull_request' && context.payload.pull_request) {
     const baseSha = context.payload.pull_request.base?.sha
     if (baseSha) {
+      if (!isCommitAvailable(baseSha)) {
+        core.warning(
+          `Auto-detected baseline commit ${baseSha} is not available in the local git history. ` +
+            'Skipping differential scan. Use fetch-depth: 0 in actions/checkout to enable it.'
+        )
+        return ''
+      }
       core.notice(`Auto-detected baseline commit for PR: ${baseSha}`)
       return baseSha
     }

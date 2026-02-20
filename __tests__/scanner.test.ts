@@ -6,9 +6,13 @@ jest.mock('@actions/github', () => ({
     payload: {}
   }
 }))
+jest.mock('child_process', () => ({
+  execSync: jest.fn()
+}))
 
 import { buildArgs } from '../src/scanner'
 import { ActionInputs } from '../src/inputs'
+import * as cp from 'child_process'
 
 function makeInputs(overrides: Partial<ActionInputs> = {}): ActionInputs {
   return {
@@ -137,9 +141,18 @@ describe('buildArgs', () => {
   })
 
   it('should add baseline commit', () => {
+    ;(cp.execSync as jest.Mock).mockReturnValue(Buffer.from('commit'))
     const args = buildArgs(makeInputs({ baselineCommit: 'abc123' }))
     expect(args).toContain('--baseline-commit')
     expect(args).toContain('abc123')
+  })
+
+  it('should skip baseline commit when not available in git history', () => {
+    ;(cp.execSync as jest.Mock).mockImplementation(() => {
+      throw new Error('not found')
+    })
+    const args = buildArgs(makeInputs({ baselineCommit: 'abc123' }))
+    expect(args).not.toContain('--baseline-commit')
   })
 
   it('should put paths at the end', () => {
