@@ -1,6 +1,6 @@
 {
   "name": "opengrep-action",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "GitHub Action for running OpenGrep static analysis security testing",
   "main": "dist/index.js",
   "scripts": {
@@ -52,7 +52,6 @@
       "@actions/github": {
         "undici": "^6.23.0"
       }
-    },
-    "minimatch": "^10.2.1"
+    }
   }
 }
