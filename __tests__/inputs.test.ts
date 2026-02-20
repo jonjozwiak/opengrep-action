@@ -11,7 +11,7 @@ import { getInputs } from '../src/inputs'
 
 function makeInputMocks(overrides: Record<string, string> = {}) {
   const defaults: Record<string, string> = {
-    version: 'v1.10.2',
+    version: 'v1.16.1',
     config: 'auto',
     paths: '.',
     'output-format': 'json',
@@ -48,7 +48,7 @@ describe('getInputs', () => {
   it('should parse default inputs successfully', () => {
     makeInputMocks()
     const inputs = getInputs()
-    expect(inputs.version).toBe('v1.10.2')
+    expect(inputs.version).toBe('v1.16.1')
     expect(inputs.config).toBe('auto')
     expect(inputs.paths).toEqual(['.'])
     expect(inputs.outputFormat).toBe('json')

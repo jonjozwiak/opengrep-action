@@ -26,7 +26,7 @@ A modern TypeScript GitHub Action for running [OpenGrep](https://github.com/open
     output-file: 'opengrep.sarif'
 
 - name: Upload SARIF to GitHub Advanced Security
-  uses: github/codeql-action/upload-sarif@v3
+  uses: github/codeql-action/upload-sarif@v4
   if: always()
   with:
     sarif_file: opengrep.sarif
@@ -52,7 +52,7 @@ jobs:
   security:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
 
       - name: Run OpenGrep
         uses: jonjozwiak/opengrep-action@v1
@@ -63,7 +63,7 @@ jobs:
           severity: 'WARNING'
 
       - name: Upload SARIF
-        uses: github/codeql-action/upload-sarif@v3
+        uses: github/codeql-action/upload-sarif@v4
         if: always()
         with:
           sarif_file: opengrep.sarif
@@ -99,7 +99,7 @@ jobs:
 - name: Comprehensive Scan
   uses: jonjozwiak/opengrep-action@v1
   with:
-    version: 'v1.10.2'
+    version: 'v1.16.1'
     config: 'auto'
     paths: 'src app'
     output-format: 'sarif'
@@ -119,7 +119,7 @@ jobs:
 
 | Input | Type | Default | Description |
 |-------|------|---------|-------------|
-| `version` | string | `v1.10.2` | OpenGrep version to use |
+| `version` | string | `v1.16.1` | OpenGrep version to use |
 | `config` | string | `auto` | Rule configuration: 'auto', file path, or rule content |
 | `paths` | string | `.` | Space-separated paths to scan |
 | `output-format` | string | `json` | Output format (see below) |
@@ -167,21 +167,45 @@ jobs:
 To upload results to the GitHub Security tab, use the official `github/codeql-action/upload-sarif` action:
 
 ```yaml
-permissions:
-  security-events: write
+name: Opengrep Scan
+on:  
+  workflow_dispatch: 		# Allow manual trigger
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+  schedule:
+    - cron: '42 12 * * 0'	# Run weekly at 12:42 on Sundays
+ 
 
-steps:
-  - name: Run OpenGrep
-    uses: jonjozwiak/opengrep-action@v1
-    with:
-      output-format: 'sarif'
-      output-file: 'opengrep.sarif'
+jobs:
+  security:
+    runs-on: ubuntu-latest
+    permissions:
+      actions: read           # workflow run telemetry
+      contents: read          # Required to checkout and read repo files
+      security-events: write  # Required to upload SARIF files to Security tab
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v6
+        with:
+         fetch-depth: 0       # Fetch full history for baseline diff
 
-  - name: Upload SARIF
-    uses: github/codeql-action/upload-sarif@v3
-    if: always()
-    with:
-      sarif_file: opengrep.sarif
+      - name: Run OpenGrep scan
+        uses: jonjozwiak/opengrep-action@v1
+        with:
+          version: 'v1.16.1'
+          output-format: 'sarif'
+          output-file: 'opengrep-results.sarif'
+          timeout: '3600'              # 1 hour
+          max-target-bytes: '5000000'  # Increase file size limit
+          severity: 'ERROR'            # ERROR, WARNING, or INFO
+          fail-on-findings: 'true'     # Fail on new vulnerabilities
+
+      - name: Upload OpenGrep scan results to GitHub Security tab
+        uses: github/codeql-action/upload-sarif@v4
+        with:
+          sarif_file: 'opengrep-results.sarif'
 ```
 
 ## Development

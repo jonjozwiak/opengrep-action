@@ -12,7 +12,7 @@ import { ActionInputs } from '../src/inputs'
 
 function makeInputs(overrides: Partial<ActionInputs> = {}): ActionInputs {
   return {
-    version: 'v1.10.2',
+    version: 'v1.16.1',
     config: 'auto',
     paths: ['.'],
     outputFormat: 'json',

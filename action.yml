@@ -10,7 +10,7 @@ inputs:
   version:
     description: 'OpenGrep version to use'
     required: false
-    default: 'v1.10.2'
+    default: 'v1.16.1'
 
   config:
     description: 'Rule configuration (auto, path to config file, or inline rules)'
