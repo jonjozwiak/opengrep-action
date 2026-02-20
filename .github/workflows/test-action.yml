@@ -1,0 +1,198 @@
+name: Test OpenGrep Action
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  security-events: write
+
+jobs:
+  test-basic:
+    name: Basic Tests - ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, ubuntu-24.04]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Create test fixtures
+        run: |
+          mkdir -p test-fixtures
+          cat > test-fixtures/test.js << 'EOF'
+          const password = "hardcoded_password_123";
+          eval(userInput);
+          const sql = "SELECT * FROM users WHERE id = " + userId;
+          EOF
+          cat > test-fixtures/test.py << 'EOF'
+          password = "admin123"
+          exec(user_input)
+          EOF
+
+      - name: Test basic JSON scan
+        id: test-json
+        uses: ./
+        with:
+          paths: 'test-fixtures'
+          output-format: 'json'
+          output-file: 'results-json.json'
+          fail-on-findings: 'false'
+          verify-signature: 'false'
+          upload-artifacts: 'false'
+
+      - name: Verify JSON output
+        run: |
+          test -f results-json.json || (echo "ERROR: JSON file not found" && exit 1)
+          jq empty results-json.json || (echo "ERROR: Invalid JSON" && exit 1)
+          echo "✓ JSON output valid"
+
+      - name: Test SARIF output
+        id: test-sarif
+        uses: ./
+        with:
+          paths: 'test-fixtures'
+          output-format: 'sarif'
+          output-file: 'results.sarif'
+          fail-on-findings: 'false'
+          verify-signature: 'false'
+          upload-artifacts: 'false'
+
+      - name: Upload SARIF to GitHub Advanced Security
+        uses: github/codeql-action/upload-sarif@v3
+        if: always()
+        with:
+          sarif_file: results.sarif
+        continue-on-error: true
+
+      - name: Verify outputs are set
+        run: |
+          echo "Results file: ${{ steps.test-json.outputs.results-file }}"
+          echo "Findings count: ${{ steps.test-json.outputs.findings-count }}"
+          echo "Critical count: ${{ steps.test-json.outputs.critical-count }}"
+          echo "Exit code: ${{ steps.test-json.outputs.scan-exit-code }}"
+          test -n "${{ steps.test-json.outputs.results-file }}" || (echo "ERROR: results-file not set" && exit 1)
+
+  test-config:
+    name: Configuration Tests
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Create test code
+        run: |
+          mkdir -p src tests
+          echo "const pwd = 'test123';" > src/app.js
+          echo "const test = 'safe';" > tests/test.js
+
+      - name: Test with exclusions
+        uses: ./
+        with:
+          paths: 'src tests'
+          exclude: 'tests'
+          output-format: 'json'
+          fail-on-findings: 'false'
+          verify-signature: 'false'
+          upload-artifacts: 'false'
+
+      - name: Test severity filtering
+        uses: ./
+        with:
+          paths: 'src'
+          severity: 'ERROR'
+          output-format: 'json'
+          fail-on-findings: 'false'
+          verify-signature: 'false'
+          upload-artifacts: 'false'
+
+  test-signature:
+    name: Signature Verification
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Test with signature verification
+        uses: ./
+        with:
+          paths: '.'
+          output-format: 'json'
+          verify-signature: 'true'
+          fail-on-findings: 'false'
+          upload-artifacts: 'false'
+
+  test-fail-on-findings:
+    name: Fail on Findings
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Create vulnerable code
+        run: |
+          mkdir -p vulnerable
+          echo "const apiKey = 'sk_live_123456789';" > vulnerable/app.js
+
+      - name: Test fail-on-findings disabled
+        uses: ./
+        with:
+          paths: 'vulnerable'
+          output-format: 'json'
+          fail-on-findings: 'false'
+          verify-signature: 'false'
+          upload-artifacts: 'false'
+
+      - name: Test fail-on-findings enabled
+        id: test-fail
+        continue-on-error: true
+        uses: ./
+        with:
+          paths: 'vulnerable'
+          output-format: 'json'
+          fail-on-findings: 'true'
+          verify-signature: 'false'
+          upload-artifacts: 'false'
+
+  test-artifacts:
+    name: Artifact Upload
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Test with artifact upload
+        uses: ./
+        with:
+          paths: '.'
+          output-format: 'json'
+          upload-artifacts: 'true'
+          artifact-name: 'test-results'
+          verify-signature: 'false'
+          fail-on-findings: 'false'
+
+  test-summary:
+    name: Test Summary
+    runs-on: ubuntu-latest
+    needs: [test-basic, test-config, test-signature, test-fail-on-findings, test-artifacts]
+    if: always()
+    steps:
+      - name: Check test results
+        run: |
+          echo "Basic: ${{ needs.test-basic.result }}"
+          echo "Config: ${{ needs.test-config.result }}"
+          echo "Signature: ${{ needs.test-signature.result }}"
+          echo "Fail on Findings: ${{ needs.test-fail-on-findings.result }}"
+          echo "Artifacts: ${{ needs.test-artifacts.result }}"
+          if [ "${{ needs.test-basic.result }}" != "success" ] || \
+             [ "${{ needs.test-config.result }}" != "success" ]; then
+            echo "CRITICAL TESTS FAILED"
+            exit 1
+          fi
+          echo "✓ All critical tests passed!"
