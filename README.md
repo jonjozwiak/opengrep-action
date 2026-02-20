@@ -204,6 +204,7 @@ jobs:
 
       - name: Upload OpenGrep scan results to GitHub Security tab
         uses: github/codeql-action/upload-sarif@v4
+        # if: always()   ## Add this if you want CodeQL alerts generated when blocking on failures
         with:
           sarif_file: 'opengrep-results.sarif'
 ```
