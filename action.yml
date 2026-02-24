@@ -1,4 +1,4 @@
-name: 'OpenGrep SAST Scanner'
+name: 'OpenGrep Scanner'
 description: 'Run OpenGrep static analysis security testing with configurable rules and outputs'
 author: 'jonjozwiak'
 
